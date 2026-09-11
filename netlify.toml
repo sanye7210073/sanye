@@ -1,0 +1,14 @@
+[build]
+  command = "npm install -g pnpm@10.14.0 && pnpm install && set NEXT_TURBOPACK=0&& pnpm build"
+  publish = ".next"
+
+[build.environment]
+  NODE_VERSION = "22"
+  NEXT_PUBLIC_STORAGE_TYPE = "localstorage"
+  NEXT_PUBLIC_DOUBAN_IMAGE_PROXY_TYPE = "cmliussss-cdn-tencent"
+  NEXT_PUBLIC_DOUBAN_PROXY_TYPE = "cmliussss-cdn-tencent"
+  PASSWORD = "sanye"
+  NETLIFY_BLOBS_CONTEXT = "{}"
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
