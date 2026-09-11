@@ -18,7 +18,7 @@ import {
 import { UpstashRedisStorage } from './upstash.db';
 import { incrementDbQuery } from './performance-monitor';
 
-// storage type 常量: 'localstorage' | 'redis' | 'upstash'，默认 'localstorage'
+// storage type 常量: 'localstorage' | 'redis' | 'upstash'，默认 'upstash'（EdgeOne 部署）
 const STORAGE_TYPE =
   (process.env.NEXT_PUBLIC_STORAGE_TYPE as
     | 'localstorage'
@@ -26,7 +26,7 @@ const STORAGE_TYPE =
     | 'upstash'
     | 'kvrocks'
     | 'sqlite'
-    | undefined) || 'localstorage';
+    | undefined) || 'upstash';
 
 // 创建存储实例
 function createStorage(): IStorage {

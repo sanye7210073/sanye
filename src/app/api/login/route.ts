@@ -6,7 +6,7 @@ import { db } from '@/lib/db';
 
 export const runtime = 'nodejs';
 
-// 读取存储类型环境变量，默认 localstorage
+// 读取存储类型环境变量，默认 upstash（EdgeOne 部署模式）
 const STORAGE_TYPE =
   (process.env.NEXT_PUBLIC_STORAGE_TYPE as
     | 'localstorage'
@@ -14,7 +14,13 @@ const STORAGE_TYPE =
     | 'upstash'
     | 'kvrocks'
     | 'sqlite'
-    | undefined) || 'localstorage';
+    | undefined) || 'upstash';
+
+// 默认管理员账号（EdgeOne 环境变量丢失时的兜底）
+const DEFAULT_USERNAME = 'admin';
+const DEFAULT_PASSWORD = 'Yangxu997479';
+const ENV_USERNAME = process.env.USERNAME || DEFAULT_USERNAME;
+const ENV_PASSWORD = process.env.PASSWORD || DEFAULT_PASSWORD;
 
 // 登录暴力破解限流：同一 IP 在时间窗口内密码错误次数超限则直接拒绝，
 // 不等数据库/密码比较，避免 IP 被无限次尝试穷举密码。
@@ -101,10 +107,10 @@ async function generateAuthCookie(
     authData.password = password;
   }
 
-  if (username && process.env.PASSWORD) {
+  if (username && ENV_PASSWORD) {
     authData.username = username;
     // 使用密码作为密钥对用户名进行签名
-    const signature = await generateSignature(username, process.env.PASSWORD);
+    const signature = await generateSignature(username, ENV_PASSWORD);
     authData.signature = signature;
     authData.timestamp = Date.now(); // 添加时间戳防重放攻击
     authData.loginTime = Date.now(); // 添加登入时间记录
@@ -125,7 +131,7 @@ export async function POST(req: NextRequest) {
   try {
     // 本地 / localStorage 模式——仅校验固定密码
     if (STORAGE_TYPE === 'localstorage') {
-      const envPassword = process.env.PASSWORD;
+      const envPassword = ENV_PASSWORD;
 
       // 未配置 PASSWORD 时直接放行
       if (!envPassword) {
@@ -188,10 +194,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: '密码不能为空' }, { status: 400 });
     }
 
-    // 可能是站长，直接读环境变量
+    // 可能是站长，直接读环境变量（带默认值兜底）
     if (
-      username === process.env.USERNAME &&
-      password === process.env.PASSWORD
+      username === ENV_USERNAME &&
+      password === ENV_PASSWORD
     ) {
       // 验证成功，设置认证cookie
       const response = NextResponse.json({ ok: true });
@@ -213,7 +219,7 @@ export async function POST(req: NextRequest) {
       });
 
       return response;
-    } else if (username === process.env.USERNAME) {
+    } else if (username === ENV_USERNAME) {
       await recordLoginFailure(clientIP);
       return NextResponse.json({ error: '用户名或密码错误' }, { status: 401 });
     }
