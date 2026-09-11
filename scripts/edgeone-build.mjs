@@ -281,15 +281,16 @@ function injectLayoutAuthCheck() {
     const __ref = __h.get('referer') || '';
     try { if (__ref) __path = new URL(__ref).pathname; } catch {}
   }
-  if (!__path) __path = '/';
-
-  const __skipPaths = ${pageSkipPaths};
-  if (!__skipPaths.some((p) => __path.startsWith(p))) {
-    const __cookieStore = await cookies();
-    const __authCookie = __cookieStore.get('user_auth') || __cookieStore.get('auth');
-    if (!__authCookie) {
-      const __search = __h.get('x-search') || '';
-      redirect('/login?redirect=' + encodeURIComponent(__path + __search));
+  // EdgeOne 环境下可能拿不到 x-pathname header，此时跳过 SSR auth 检查，避免重定向死循环
+  if (__path) {
+    const __skipPaths = ${pageSkipPaths};
+    if (!__skipPaths.some((p) => __path.startsWith(p))) {
+      const __cookieStore = await cookies();
+      const __authCookie = __cookieStore.get('user_auth') || __cookieStore.get('auth');
+      if (!__authCookie) {
+        const __search = __h.get('x-search') || '';
+        redirect('/login?redirect=' + encodeURIComponent(__path + __search));
+      }
     }
   }
 `;
